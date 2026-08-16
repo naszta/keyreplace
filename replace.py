@@ -4,10 +4,20 @@ from pathlib import Path
 import os
 import requests
 import sys
+from typing import Optional
 
 
 SSH_STAMP = "#SSH ID - @{}"
 SSH_URL = "https://sshid.io/{}"
+
+
+def get_url(user: str, key_type: Optional[str] = None) -> str:
+    if not user:
+        raise Exception("User must not be empty or None")
+    ssh_url = SSH_URL.format(user)
+    if key_type:
+        ssh_url = f"{ssh_url}/{key_type}"
+    return ssh_url
 
 
 def sshKeyTransform(text: str) -> list[str]:
@@ -22,12 +32,13 @@ def sshKeyTransform(text: str) -> list[str]:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--user", required=True, help="sshid.io id")
+    parser.add_argument("--key", choices=["ECDSA-SK", "ECDSA", "ED25519", "RSA"], help="public key type")
     args = parser.parse_args()
 
     if not args.user:
         sys.exit(1)
 
-    ssh_url = SSH_URL.format(args.user)
+    ssh_url = get_url(args.user, args.key)
     ssh_stamp = SSH_STAMP.format(args.user)
 
     res = requests.get(ssh_url)
